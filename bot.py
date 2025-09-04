@@ -4,21 +4,21 @@ import random
 import pyheif
 from datetime import datetime
 from PIL import Image
+from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 
-# 🔑 Токен от BotFather
-TOKEN = "8241752581:AAHquBLI_GZn49feWkjnNdCzQecmyVM_Ca4"
+# Загружаем .env
+load_dotenv()
+TOKEN = os.getenv("BOT_TOKEN")
+SECRET_CODE = os.getenv("SECRET_CODE")
 
-# 🔐 Секретный код доступа
-SECRET_CODE = "22032024"
-
-# 📂 Папка с картинками
+# Папка с картинками
 IMAGE_FOLDER = "images"
 
-# 📜 Список случайных текстов
+# Случайные тексты
 RANDOM_TEXTS = [
-    "'Любовь не знает ни меры, ни цены' Эрих Мария Ремарк",
+"'Любовь не знает ни меры, ни цены' Эрих Мария Ремарк",
     "'Самое лучшее во мне — это ты'",
     "'Иногда человек, которого вы любите, просто не понимает, как сильно вы его любите'",
     "'Жизнь измеряется не количеством сделанных вдохов и выдохов, а количеством тех моментов, когда от счастья захватывает дух'",
@@ -57,25 +57,26 @@ RANDOM_TEXTS = [
 	"'Любовь — единственное золото.'   Альфред Теннисон",
 ]
 
-# 📁 Файл для хранения авторизованных пользователей и лимитов
+# Файл для хранения авторизованных пользователей
 AUTH_FILE = "authorized.json"
 
-# 🔄 Загружаем список авторизованных пользователей
+
 def load_authorized():
     if os.path.exists(AUTH_FILE):
         with open(AUTH_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
     return {}
 
-# 💾 Сохраняем список авторизованных пользователей
+
 def save_authorized(users):
     with open(AUTH_FILE, "w", encoding="utf-8") as f:
         json.dump(users, f, ensure_ascii=False, indent=2)
 
-# 👤 Список авторизованных пользователей (формат dict: {id: {count, last_date}})
+
 authorized_users = load_authorized()
 
-# 🔄 Конвертация HEIC → JPG
+
+# Конвертация HEIC → JPG
 def convert_heic_to_jpg(file_path):
     heif_file = pyheif.read(file_path)
     image = Image.frombytes(
@@ -90,8 +91,12 @@ def convert_heic_to_jpg(file_path):
     image.save(new_path, "JPEG")
     return new_path
 
-# 🖼️ Выбираем случайное изображение
+
+# Случайное изображение
 def get_random_image():
+    if not os.path.exists(IMAGE_FOLDER):
+        return None
+
     files = os.listdir(IMAGE_FOLDER)
     images = []
 
@@ -99,7 +104,6 @@ def get_random_image():
         path = os.path.join(IMAGE_FOLDER, f)
 
         if f.lower().endswith(".heic"):
-            print(f"⚡ Конвертирую {f} в JPG...")
             try:
                 path = convert_heic_to_jpg(path)
             except Exception as e:
@@ -113,44 +117,46 @@ def get_random_image():
         return None
     return random.choice(images)
 
-# 📜 Выбираем случайный текст
+
+# Случайный текст
 def get_random_text():
     return random.choice(RANDOM_TEXTS)
 
-# 🚀 Команда /start
+
+# Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
     if user_id in authorized_users:
-        await show_main_menu(update)
+        await show_main_menu(update.message)
     else:
         await update.message.reply_text("🔑 Введи секретный код для доступа:")
 
-# 🔐 Проверка кода
+
+# Проверка кода
 async def check_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
     text = update.message.text
 
     if user_id in authorized_users:
-        return  # уже авторизован
+        return
 
     if text == SECRET_CODE:
         authorized_users[user_id] = {"count": 0, "last_date": ""}
         save_authorized(authorized_users)
-        await update.message.reply_text("Танюш, это ты?)))")
-        await show_main_menu(update)
+        await update.message.reply_text("Танюш, это ты?))))❤️")
+        await show_main_menu(update.message)
     else:
         await update.message.reply_text("🚫 Неверный код!")
 
-# 📲 Главное меню
-async def show_main_menu(update: Update):
-    keyboard = [
-        [InlineKeyboardButton("Пук☺️", callback_data="combo")]
-    ]
+
+# Главное меню
+async def show_main_menu(message):
+    keyboard = [[InlineKeyboardButton("📸Пук🙃", callback_data="combo")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
+    await message.reply_text("Выбери действие ⬇️", reply_markup=reply_markup)
 
-    await update.message.reply_text("Выбери действие ⬇️", reply_markup=reply_markup)
 
-# 🎲 Обработка кнопки
+# Обработка кнопки
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user_id = str(query.from_user.id)
@@ -159,17 +165,15 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await query.answer("🚫 Нет доступа!")
         return
 
-    # 📅 Проверяем лимит
     today = datetime.now().strftime("%Y-%m-%d")
     user_data = authorized_users[user_id]
 
-    # если день сменился — обнуляем счётчик
     if user_data["last_date"] != today:
         user_data["count"] = 0
         user_data["last_date"] = today
 
     if user_data["count"] >= 2:
-        await query.message.reply_text("На сегодня все пупсик(🥺.")
+        await query.message.reply_text("🥺 На сегодня всё, пупсик")
         return
 
     user_data["count"] += 1
@@ -186,7 +190,8 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await query.message.reply_text("❌ В папке images нет картинок!")
 
-# ▶️ Запуск бота
+
+# Запуск бота
 def main():
     app = Application.builder().token(TOKEN).build()
 
@@ -196,6 +201,7 @@ def main():
 
     print("✅ Бот запущен. Жми /start в Telegram")
     app.run_polling()
+
 
 if _name_ == "_main_":
     main()
