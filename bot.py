@@ -86,12 +86,6 @@ def get_random_text():
     return random.choice(RANDOM_TEXTS)
 
 
- # Обработчик всех текстовых сообщений
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user_id = str(update.message.from_user.id)
-        text = update.message.text
-
-
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
@@ -101,53 +95,40 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🔑 Введи секретный код для доступа:")
 
 
-# Главное меню
-async def show_main_menu(message):
-    keyboard = [[InlineKeyboardButton("📸Пук🙃", callback_data="combo")]]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    await message.reply_text("Выбери действие ⬇️", reply_markup=reply_markup)
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.message.from_user.id)
+    text = update.message.text
 
-
-# -------------------- Главное меню --------------------
-async def show_main_menu(message):
-    keyboard = [["📸Пук🙃"]]  # Кнопка внизу
-    reply_markup = ReplyKeyboardMarkup(
-        keyboard, resize_keyboard=True, one_time_keyboard=False
-    )
-    await message.reply_text("тыкни!!! ⬇️", reply_markup=reply_markup)
-
-
-        if user_id not in authorized_users:
-            # Проверяем секретный код
-            if text == SECRET_CODE:
-                authorized_users[user_id] = {"count": 0, "last_date": ""}
-                save_authorized(authorized_users)
-                await update.message.reply_text("Танюш, это ты?))))❤️")
-                await show_main_menu(update.message)
-            else:
-                await update.message.reply_text("подумай лучше!")
-            return
-
-        # Обработка кнопки
-        if text == "📸Пук🙃":
-            today = datetime.now().strftime("%Y-%m-%d")
-            user_data = authorized_users[user_id]
-            if user_data["last_date"] != today:
-                user_data["count"] = 0
-                user_data["last_date"] = today
-            if user_data["count"] >= 2:
-                await update.message.reply_text("🥺 На сегодня всё, пупсик")
-                return
-            user_data["count"] += 1
+    if user_id not in authorized_users:
+        if text == SECRET_CODE:
+            authorized_users[user_id] = {"count": 0, "last_date": ""}
             save_authorized(authorized_users)
+            await update.message.reply_text("Танюш, это ты?))))❤️")
+            await show_main_menu(update)
+        else:
+            await update.message.reply_text("Подумай лучше!")
+        return
 
-            image_path = get_random_image()
-            caption = get_random_text()
-            if image_path:
-                with open(image_path, "rb") as photo:
-                    await update.message.reply_photo(photo=photo, caption=caption)
-            else:
-                await update.message.reply_text("❌ошибка в картинках!")
+    # Обработка кнопки
+    if text == "📸Пук🙃":
+        today = datetime.now().strftime("%Y-%m-%d")
+        user_data = authorized_users[user_id]
+        if user_data["last_date"] != today:
+            user_data["count"] = 0
+            user_data["last_date"] = today
+        if user_data["count"] >= 2:
+            await update.message.reply_text("🥺 На сегодня всё, пупсик")
+            return
+        user_data["count"] += 1
+        save_authorized(authorized_users)
+
+        image_path = get_random_image()
+        caption = get_random_text()
+        if image_path:
+            with open(image_path, "rb") as photo:
+                await update.message.reply_photo(photo=photo, caption=caption)
+        else:
+            await update.message.reply_text("❌ошибка в картинках!")
 
 
 # Запуск Telegram бота
