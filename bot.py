@@ -151,7 +151,7 @@ async def show_main_menu(message):
 def run_telegram_bot():
     app = Application.builder().token(TOKEN).connect_timeout(30).read_timeout(30).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, check_code))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     app.add_handler(CallbackQueryHandler(button_handler))
     print("✅ Бот запущен. Жми /start в Telegram")
     app.run_polling()
