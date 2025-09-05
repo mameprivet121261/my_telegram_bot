@@ -185,7 +185,7 @@ def main():
 
 
 # Flask dummy сервер для Render
-flask_app = Flask(_name_)
+flask_app = Flask(__name__)
 
 
 @flask_app.route("/")
