@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 import os
 import json
 import random
@@ -187,6 +186,5 @@ def main():
     app.run_polling()
 
 
-if _name_ == "_main_":
->>>>>>> Stashed changes
+if __name__ == "_main_":
     main()
