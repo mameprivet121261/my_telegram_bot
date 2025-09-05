@@ -109,13 +109,23 @@ async def show_main_menu(message):
     )
     await message.reply_text("тыкни!!! ⬇️", reply_markup=reply_markup)
 
-# -------------------- Обработка кнопки --------------------
-async def check_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.message.from_user.id)
-    text = update.message.text
+    # Обработчик всех текстовых сообщений
+    async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user_id = str(update.message.from_user.id)
+        text = update.message.text
 
-    if user_id in authorized_users:
-        # Обработка нажатия кнопки
+        if user_id not in authorized_users:
+            # Проверяем секретный код
+            if text == SECRET_CODE:
+                authorized_users[user_id] = {"count": 0, "last_date": ""}
+                save_authorized(authorized_users)
+                await update.message.reply_text("Танюш, это ты?))))❤️")
+                await show_main_menu(update.message)
+            else:
+                await update.message.reply_text("подумай лучше!")
+            return
+
+        # Обработка кнопки
         if text == "📸Пук🙃":
             today = datetime.now().strftime("%Y-%m-%d")
             user_data = authorized_users[user_id]
@@ -129,22 +139,12 @@ async def check_code(update: Update, context: ContextTypes.DEFAULT_TYPE):
             save_authorized(authorized_users)
 
             image_path = get_random_image()
-            text = get_random_text()
+            caption = get_random_text()
             if image_path:
                 with open(image_path, "rb") as photo:
-                    await update.message.reply_photo(photo=photo, caption=text)
+                    await update.message.reply_photo(photo=photo, caption=caption)
             else:
-                await update.message.reply_text("❌ В папке images нет картинок!")
-        return
-
-    # Проверка секретного кода
-    if text == SECRET_CODE:
-        authorized_users[user_id] = {"count": 0, "last_date": ""}
-        save_authorized(authorized_users)
-        await update.message.reply_text("Танюш, это ты?))))❤️")
-        await show_main_menu(update.message)
-    else:
-        await update.message.reply_text("🚫 Неверный код!")
+                await update.message.reply_text("❌ошибка в картинках!")
 
 
 # Запуск Telegram бота
