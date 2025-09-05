@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 from PIL import Image
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 from telegram import ReplyKeyboardMarkup
 from flask import Flask
 import threading
