@@ -2,7 +2,7 @@ import os
 import json
 import random
 from datetime import datetime
-from PIL import Image
+from PIL import Image, ExifTags
 import io
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
@@ -85,11 +85,29 @@ def get_random_image():
 # Подготовка изображения для Telegram
 def prepare_image_for_telegram(path):
     with Image.open(path) as img:
-        # Максимальный размер для Telegram
+        # Проверяем ориентацию через EXIF
+        try:
+            for orientation in ExifTags.TAGS.keys():
+                if ExifTags.TAGS[orientation] == 'Orientation':
+                    break
+            exif = img._getexif()
+            if exif is not None:
+                orientation_value = exif.get(orientation, 1)
+                if orientation_value == 3:
+                    img = img.rotate(180, expand=True)
+                elif orientation_value == 6:
+                    img = img.rotate(270, expand=True)
+                elif orientation_value == 8:
+                    img = img.rotate(90, expand=True)
+        except Exception:
+            pass
+
+        # Ограничиваем размеры
         max_size = (1024, 1024)
         img.thumbnail(max_size)
+
+        # Сохраняем в BytesIO
         bio = io.BytesIO()
-        # Всегда сохраняем в JPEG
         img.save(bio, format="JPEG")
         bio.seek(0)
         return bio
