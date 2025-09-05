@@ -85,6 +85,13 @@ def get_random_image():
 def get_random_text():
     return random.choice(RANDOM_TEXTS)
 
+
+ # Обработчик всех текстовых сообщений
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user_id = str(update.message.from_user.id)
+        text = update.message.text
+
+
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
@@ -109,10 +116,6 @@ async def show_main_menu(message):
     )
     await message.reply_text("тыкни!!! ⬇️", reply_markup=reply_markup)
 
-    # Обработчик всех текстовых сообщений
-    async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user_id = str(update.message.from_user.id)
-        text = update.message.text
 
         if user_id not in authorized_users:
             # Проверяем секретный код
