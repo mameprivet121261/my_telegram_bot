@@ -4,7 +4,7 @@ import random
 from datetime import datetime
 from PIL import Image
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 from telegram import ReplyKeyboardMarkup
 from flask import Flask
 import threading
@@ -95,18 +95,28 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🔑 Введи секретный код для доступа:")
 
 
+# Главное меню с кнопкой внизу
+async def show_main_menu(message):
+    keyboard = [["📸Пук🙃"]]
+    reply_markup = ReplyKeyboardMarkup(
+        keyboard, resize_keyboard=True, one_time_keyboard=False
+    )
+    await message.reply_text("тыкни!!! ⬇️", reply_markup=reply_markup)
+
+# Обработка всех текстовых сообщений
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
     text = update.message.text
 
     if user_id not in authorized_users:
+        # Проверяем секретный код
         if text == SECRET_CODE:
             authorized_users[user_id] = {"count": 0, "last_date": ""}
             save_authorized(authorized_users)
             await update.message.reply_text("Танюш, это ты?))))❤️")
-            await show_main_menu(update)
+            await show_main_menu(update.message)
         else:
-            await update.message.reply_text("Подумай лучше!")
+            await update.message.reply_text("подумай лучше!")
         return
 
     # Обработка кнопки
