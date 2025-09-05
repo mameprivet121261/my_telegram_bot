@@ -3,6 +3,7 @@ import json
 import random
 from datetime import datetime
 from PIL import Image
+import io
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
 from telegram import ReplyKeyboardMarkup
@@ -81,6 +82,18 @@ def get_random_image():
     images = [os.path.join(IMAGE_FOLDER, f) for f in files if f.lower().endswith((".jpg", ".jpeg", ".png"))]
     return random.choice(images) if images else None
 
+# Подготовка изображения для Telegram
+def prepare_image_for_telegram(path):
+    with Image.open(path) as img:
+        # Максимальный размер для Telegram
+        max_size = (1024, 1024)
+        img.thumbnail(max_size)
+        bio = io.BytesIO()
+        # Всегда сохраняем в JPEG
+        img.save(bio, format="JPEG")
+        bio.seek(0)
+        return bio
+
 # Случайный текст
 def get_random_text():
     return random.choice(RANDOM_TEXTS)
@@ -135,8 +148,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         image_path = get_random_image()
         caption = get_random_text()
         if image_path:
-            with open(image_path, "rb") as photo:
-                await update.message.reply_photo(photo=photo, caption=caption)
+            photo_file = prepare_image_for_telegram(image_path)
+            await update.message.reply_photo(photo=photo_file, caption=caption)
         else:
             await update.message.reply_text("❌ошибка в картинках!")
 
