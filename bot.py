@@ -139,18 +139,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
     text = update.message.text
 
+    # Если пользователь не авторизован
     if user_id not in authorized_users:
-        # Проверяем секретный код
         if text == SECRET_CODE:
             authorized_users[user_id] = {"count": 0, "last_date": ""}
             save_authorized(authorized_users)
             await update.message.reply_text("Танюш, это ты?))))❤️")
             await show_main_menu(update.message)
         else:
-            await update.message.reply_text("подумай лучше!")
-        return
+            await update.message.reply_text("Подумай лучше!")
+        return  # Важно: дальше не идём, пока пользователь не авторизован
 
-    # Обработка кнопки
+    # Если пользователь авторизован
     if text == "📸Пук🙃":
         today = datetime.now().strftime("%Y-%m-%d")
         user_data = authorized_users[user_id]
@@ -166,10 +166,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         image_path = get_random_image()
         caption = get_random_text()
         if image_path:
-            photo_file = prepare_image_for_telegram(image_path)
-            await update.message.reply_photo(photo=photo_file, caption=caption)
+            # Подготовка изображения для Telegram
+            image_bytes = prepare_image_for_telegram(image_path)
+            await update.message.reply_photo(photo=image_bytes, caption=caption)
         else:
-            await update.message.reply_text("❌ошибка в картинках!")
+            await update.message.reply_text("❌ Ошибка с картинками!")
+    else:
+        # Сообщение не кнопка
+        await update.message.reply_text("Нажми кнопку ⬇️")
 
 
 # Запуск Telegram бота
