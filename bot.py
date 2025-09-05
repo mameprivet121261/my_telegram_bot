@@ -16,6 +16,9 @@ SECRET_CODE = os.getenv("SECRET_CODE")
 IMAGE_FOLDER = "images"
 
 
+AUTH_FILE = "/tmp/authorized.json"
+
+
 RANDOM_TEXTS = [
 "'Любовь не знает ни меры, ни цены' Эрих Мария Ремарк",
     "'Самое лучшее во мне — это ты'",
