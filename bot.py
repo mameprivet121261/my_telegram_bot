@@ -201,7 +201,7 @@ def run_flask():
     flask_app.run(host="0.0.0.0", port=port)
 
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     # запускаем Flask в отдельном потоке
     threading.Thread(target=run_flask).start()
     # запускаем Telegram бота
