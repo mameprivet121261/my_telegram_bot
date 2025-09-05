@@ -15,7 +15,7 @@ SECRET_CODE = os.getenv("SECRET_CODE")
 # Папка с картинками
 IMAGE_FOLDER = "images"
 
-# Случайные тексты
+
 RANDOM_TEXTS = [
 "'Любовь не знает ни меры, ни цены' Эрих Мария Ремарк",
     "'Самое лучшее во мне — это ты'",
@@ -56,8 +56,7 @@ RANDOM_TEXTS = [
 	"'Любовь — единственное золото.'   Альфред Теннисон",
 ]
 
-# Файл для хранения авторизованных пользователей
-AUTH_FILE = "authorized.json"
+# Функции для работы с авторизованными пользователями
 
 
 def load_authorized():
@@ -85,15 +84,7 @@ def get_random_image():
 
     for f in files:
         path = os.path.join(IMAGE_FOLDER, f)
-
-        if f.lower().endswith(".heic"):
-            try:
-                path = convert_heic_to_jpg(path)
-            except Exception as e:
-                print(f"Ошибка при конвертации {f}: {e}")
-                continue
-
-        if f.lower().endswith((".jpg", ".jpeg", ".png")) or path.endswith(".jpg"):
+        if f.lower().endswith((".jpg", ".jpeg", ".png")):
             images.append(path)
 
     if not images:
@@ -177,11 +168,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # Запуск бота
 def main():
     app = Application.builder() \
-           .token(TOKEN) \
-           .connect_timeout(30) \
-           .read_timeout(30) \
-           .build()
-           
+        .token(TOKEN) \
+        .connect_timeout(30) \
+        .read_timeout(30) \
+        .build()
+
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, check_code))
     app.add_handler(CallbackQueryHandler(button_handler))
@@ -190,5 +181,22 @@ def main():
     app.run_polling()
 
 
-if __name__ == "__main__":
+# Flask dummy сервер для Render
+flask_app = Flask(_name_)
+
+
+@flask_app.route("/")
+def index():
+    return "Bot is running!"
+
+
+def run_flask():
+    port = int(os.environ.get("PORT", 5000))
+    flask_app.run(host="0.0.0.0", port=port)
+
+
+if _name_ == "_main_":
+    # запускаем Flask в отдельном потоке
+    threading.Thread(target=run_flask).start()
+    # запускаем Telegram бота
     main()
