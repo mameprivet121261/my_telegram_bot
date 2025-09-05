@@ -176,8 +176,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Запуск бота
 def main():
-    app = Application.builder().token(TOKEN).build()
-
+    app = (Application.builder() \
+           .token(TOKEN) \
+           .connect_timeout(30) \
+           .read_timeout(30) \
+           .build()
+           
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, check_code))
     app.add_handler(CallbackQueryHandler(button_handler))
