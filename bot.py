@@ -176,7 +176,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # Запуск бота
 def main():
-    app = (Application.builder() \
+    app = Application.builder() \
            .token(TOKEN) \
            .connect_timeout(30) \
            .read_timeout(30) \
