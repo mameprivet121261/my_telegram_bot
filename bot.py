@@ -2,7 +2,7 @@ import os
 import json
 import random
 from datetime import datetime
-from PIL import Image, ExifTags
+from PIL import Image
 import io
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
@@ -82,35 +82,26 @@ def get_random_image():
     images = [os.path.join(IMAGE_FOLDER, f) for f in files if f.lower().endswith((".jpg", ".jpeg", ".png"))]
     return random.choice(images) if images else None
 
-# Подготовка изображения для Telegram
-def prepare_image_for_telegram(path):
-    with Image.open(path) as img:
-        # Проверяем ориентацию через EXIF
-        try:
-            for orientation in ExifTags.TAGS.keys():
-                if ExifTags.TAGS[orientation] == 'Orientation':
-                    break
-            exif = img._getexif()
-            if exif is not None:
-                orientation_value = exif.get(orientation, 1)
-                if orientation_value == 3:
-                    img = img.rotate(180, expand=True)
-                elif orientation_value == 6:
-                    img = img.rotate(270, expand=True)
-                elif orientation_value == 8:
-                    img = img.rotate(90, expand=True)
-        except Exception:
-            pass
+# Функция для безопасной отправки фото
+async def send_safe_photo(update, image_path, caption=""):
+    try:
+        with Image.open(image_path) as img:
+            # Ограничение максимальной высоты и ширины
+            MAX_DIMENSION = 2000  # px
+            if img.height > MAX_DIMENSION or img.width > MAX_DIMENSION:
+                ratio = min(MAX_DIMENSION / img.width, MAX_DIMENSION / img.height)
+                new_size = (int(img.width * ratio), int(img.height * ratio))
+                img = img.resize(new_size, Image.LANCZOS)
 
-        # Ограничиваем размеры
-        max_size = (1024, 1024)
-        img.thumbnail(max_size)
+            # Сохраняем в память в формате JPEG
+            img_bytes = io.BytesIO()
+            img.save(img_bytes, format="JPEG")
+            img_bytes.seek(0)
 
-        # Сохраняем в BytesIO
-        bio = io.BytesIO()
-        img.save(bio, format="JPEG")
-        bio.seek(0)
-        return bio
+            await update.message.reply_photo(photo=img_bytes, caption=caption)
+    except Exception as e:
+        await update.message.reply_text(f"❌ Ошибка с изображением: {e}")
+
 
 # Случайный текст
 def get_random_text():
@@ -134,23 +125,24 @@ async def show_main_menu(message):
     )
     await message.reply_text("тыкни!!! ⬇️", reply_markup=reply_markup)
 
-# Обработка всех текстовых сообщений
+
+# Обновленный блок обработки кнопки
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.message.from_user.id)
     text = update.message.text
 
-    # Если пользователь не авторизован
     if user_id not in authorized_users:
+        # Проверяем секретный код
         if text == SECRET_CODE:
             authorized_users[user_id] = {"count": 0, "last_date": ""}
             save_authorized(authorized_users)
             await update.message.reply_text("Танюш, это ты?))))❤️")
             await show_main_menu(update.message)
         else:
-            await update.message.reply_text("Подумай лучше!")
-        return  # Важно: дальше не идём, пока пользователь не авторизован
+            await update.message.reply_text("подумай лучше!")
+        return
 
-    # Если пользователь авторизован
+    # Обработка кнопки
     if text == "📸Пук🙃":
         today = datetime.now().strftime("%Y-%m-%d")
         user_data = authorized_users[user_id]
@@ -163,14 +155,13 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_data["count"] += 1
         save_authorized(authorized_users)
 
+        # Получаем случайное изображение
         image_path = get_random_image()
         caption = get_random_text()
         if image_path:
-            # Подготовка изображения для Telegram
-            image_bytes = prepare_image_for_telegram(image_path)
-            await update.message.reply_photo(photo=image_bytes, caption=caption)
+            await send_safe_photo(update, image_path, caption)
         else:
-            await update.message.reply_text("❌ Ошибка с картинками!")
+            await update.message.reply_text("❌ Ошибка: нет картинок в папке!")
     else:
         # Сообщение не кнопка
         await update.message.reply_text("Нажми кнопку ⬇️")
