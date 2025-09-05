@@ -6,6 +6,9 @@ from PIL import Image
 from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, ContextTypes, filters
+from flask import Flask
+import threading
+
 
 # Загружаем .env
 load_dotenv()
