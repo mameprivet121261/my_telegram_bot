@@ -1,3 +1,0 @@
-.env
-authorized.json
-_pycache_/
