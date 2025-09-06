@@ -160,7 +160,7 @@ telegram_app.add_handler(CommandHandler("start", start))
 telegram_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
 # Flask сервер
-flask_app = Flask(_name_)
+flask_app = Flask(__name__)
 
 @flask_app.route("/")
 def index():
