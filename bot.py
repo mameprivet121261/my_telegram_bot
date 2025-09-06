@@ -172,7 +172,7 @@ def webhook():
     telegram_app.update_queue.put_nowait(update)
     return "ok"
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     import requests
     # URL Render-а
     url = f"https://{os.environ.get('RENDER_EXTERNAL_HOSTNAME')}/{TOKEN}"
